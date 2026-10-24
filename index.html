@@ -582,7 +582,9 @@ const Vocab = (() => {
     } catch (e) { fallback(); }
   });
   count();
-  return { button, render };
+  return { button, render, keyOf, has: (k) => items.some((x) => x.key === k), all: () => items,
+    add(entry) { if (!items.some((x) => x.key === entry.key)) { items.unshift(entry); save(); } },
+    replaceAll(list) { items = list; save(); }, save, count };
 })();
 
 /* ---------------- frase alrededor de la palabra (para el contexto) ---------------- */
@@ -731,6 +733,7 @@ function renderAnalyses(form, res, opts = {}) {
     const lg = el('a', null, 'Diccionarios en Logeion ↗'); lg.href = 'https://logeion.uchicago.edu/' + encodeURIComponent(target); lg.target = '_blank'; lg.rel = 'noopener';
     const wk = el('a', null, 'Wikcionario ↗'); wk.href = 'https://en.wiktionary.org/wiki/' + encodeURIComponent(target) + '#Latin'; wk.target = '_blank'; wk.rel = 'noopener';
     foot.append(lg, wk);
+    if (window.LectorExtras && !opts.inline) { try { window.LectorExtras.decorateFoot(foot, form, res); } catch (e) { console.error(e); } }
     pop.append(foot);
   }
   return pop;
@@ -750,7 +753,9 @@ function placePop(pop, box) {
   let top = (below >= ph + 12 || below >= above) ? box.bottom + 8 : box.top - ph - 8;
   pop.style.left = (left - sr.left) + 'px'; pop.style.top = (top - sr.top) + 'px';
 }
+let lastHit = null;
 async function showFor(hit) {
+  lastHit = hit;
   const segs = hit.jsegs || hit.segs;
   const key = segs.map((s) => s.s + ':' + s.e).join('|') + hit.word;
   if (popEl && popKey === key) { closePop(); return; }
@@ -814,7 +819,7 @@ reader.addEventListener('mousemove', (e) => {
 reader.addEventListener('mouseleave', () => clearTimeout(hoverT));
 
 /* ---------------- paneles ---------------- */
-function closePanels() { ['#panelToc', '#panelSearch', '#panelMenu', '#panelVocab'].forEach((s) => ($(s).hidden = true)); }
+function closePanels() { document.querySelectorAll('.panel').forEach((p) => (p.hidden = true)); }
 function togglePanel(sel) { const p = $(sel); const was = p.hidden; closePanels(); p.hidden = !was; return was; }
 $('#btnToc').addEventListener('click', () => togglePanel('#panelToc'));
 $('#btnMenu').addEventListener('click', () => togglePanel('#panelMenu'));
@@ -1209,7 +1214,8 @@ const Pdf = (() => {
   function close() { if (io) io.disconnect(); io = null; if (pdf) { try { pdf.destroy(); } catch (e) {} } pdf = null; pages = []; rendered = new Set(); token++; }
   let rt = null;
   window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (pdf) zoom(1); }, 250); });
-  return { open, zoom, close, updateInfo, goPage, currentPage: () => (pdf ? currentPage() : null), active: () => !!pdf };
+  async function pageText(n) { const page = await pdf.getPage(n); const tc = await page.getTextContent(); let t = ''; for (const it of tc.items) { t += it.str; t += it.hasEOL ? '\n' : (it.str && !/\s$/.test(it.str) ? ' ' : ''); } return t; }
+  return { open, zoom, close, updateInfo, goPage, pageText, numPages: () => (pdf ? pages.length : 0), currentPage: () => (pdf ? currentPage() : null), active: () => !!pdf };
 })();
 
 /* ---------------- abrir archivos ---------------- */
@@ -1220,6 +1226,7 @@ function kindOf(name, type) {
   if (ext === 'docx') return 'docx';
   if (ext === 'doc') return 'doc';
   if (ext === 'txt' || type === 'text/plain') return 'txt';
+  if (/\.tei\.xml$/i.test(name) || type === 'application/tei+xml') return 'tei';
   if (['html', 'htm', 'xhtml'].includes(ext) || type === 'text/html') return 'html';
   return null;
 }
@@ -1231,7 +1238,7 @@ async function openBuffer(buf, name, type, opts = {}) {
   setStatus('Abriendo ' + name + '…');
   try {
     if (cleanupFn) { try { cleanupFn(); } catch (e) {} cleanupFn = null; }
-    const fn = { pdf: Pdf.open, epub: openEpub, docx: openDocx, txt: openText, html: openHtml }[kind];
+    const fn = { pdf: Pdf.open, epub: openEpub, docx: openDocx, txt: openText, html: openHtml, tei: (b, n) => window.LectorExtras.openTei(b, n) }[kind];
     const r = await fn(buf, name);
     cleanupFn = r.cleanup || null;
     const key = name + ':' + buf.byteLength;
@@ -1275,6 +1282,8 @@ window.addEventListener('drop', async (e) => {
   const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) openBuffer(await f.arrayBuffer(), f.name, f.type);
 });
 
+window.Lector = { lang: 'la', Lex, Vocab, Pdf, el, $, toast, setStatus, store, idb, closePanels, togglePanel, closePop, resetSurface, setToc, jumpTo, openBuffer, renderAnalyses, plain, shownLatin, reader, stage, BLOCK,
+  get docEl() { return docEl; }, get currentDoc() { return currentDoc; }, get lastHit() { return lastHit; } };
 // reabrir el último documento
 (async () => {
   const last = await idb.get('last');
@@ -1282,6 +1291,7 @@ window.addEventListener('drop', async (e) => {
 })();
 })();
 </script>
+<script src="extras.js"></script>
 
 <script>
 if ('serviceWorker' in navigator) {

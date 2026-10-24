@@ -1,11 +1,13 @@
 /* Service worker del Lector latino: guarda la aplicación y el léxico para usarlos sin conexión. */
-const CACHE = 'lector-2026-10-23';
+const CACHE = 'lector-2026-10-24';
 const FILES = [
   "./",
   "index.html",
   "latin.js",
   "lexworker.js",
   "manifest.webmanifest",
+  "extras.js",
+  "biblioteca.json",
   "data/extra.json",
   "data/lexique.txt",
   "data/modeles.txt",
