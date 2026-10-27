@@ -1,5 +1,5 @@
 /* Service worker del Lector latino: guarda la aplicación y el léxico para usarlos sin conexión. */
-const CACHE = 'lector-2026-10-24';
+const CACHE = 'lector-2026-10-27';
 const FILES = [
   "./",
   "index.html",

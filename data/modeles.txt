@@ -692,7 +692,7 @@ des:187:3:īrĕ
 des:268-271:3:īrĭs,īrĕ;ītŭr;īmŭr;īmĭnī
 des:291-296:3:īrĕr;ĭrērĭs,ĭrērĕ;īrētŭr;īrēmŭr;īrēmĭnī;īrēntŭr
 des:297,298:3:īrĕ;īmĭnī
-des:299,300:3:ītŏr;ītŏr;ĭūntŏr
+des:299-301:3:ītŏr;ītŏr;ĭūntŏr
 des:302:3:īrī
 modele:scio
 pere:audio
@@ -834,7 +834,7 @@ des:133-138:4:bō̆;bĭs;bĭt;bĭmŭs;bĭtĭs;būnt
 des:186:3:ĕūntō
 des:189,190,201,202,213-215:3:ĭēns
 des:191-200:5:ntĕm;ntĭs;ntī;ntĕ;ntēs;ntēs;ntēs;ntĭŭm;ntĭbŭs
-des:203-212:5:ntĕm;ntĭs;ntī;ntĕ;ntēs;ntēs;ntēs;ntĭŭm,nt;ntĭbŭs
+des:203-212:5:ntĕm;ntĭs;ntī;ntĕ;ntēs;ntēs;ntēs;ntĭŭm;ntĭbŭs
 des:216-224:5:ntĭs;ntī;ntĕ;ntĭă;ntĭă;ntĭă;ntĭŭm;ntĭbŭs
 des:339-350:5:nd$lupus
 des:351-362:5:nd$uita

@@ -6,9 +6,10 @@
 const L = window.Lector;
 if (!L) return;
 const { el, $, toast, store, idb } = L;
-const GR = L.lang === 'grc';
-const LG = GR ? 'grc' : 'la';
-const LANGNAME = GR ? 'griego' : 'latín';
+const EL = L.lang === 'el';
+const GR = L.lang === 'grc' || EL;
+const LG = L.lang;
+const LANGNAME = EL ? 'griego moderno' : GR ? 'griego' : 'latín';
 const plain = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[ўЎ]/g, 'y').toLowerCase();
 
 /* ================================================================== estilos */
@@ -189,7 +190,9 @@ function sentenceAt(text, idx) {
 }
 
 /* palabras muy comunes que se pueden ocultar */
-const STOP = new Set((GR
+const STOP = new Set((EL
+  ? 'ο η το οι τα του της των τον την τη τις τους ενας μια ενα και κι να θα δεν δε μη μην σε σ στο στη στην στον στα στις στους στου στης απο για με που πως οτι αν οταν ενω αλλα η ουτε ειτε ως σαν εγω εσυ αυτος εμεις εσεις μου σου μας σας ειμαι εχω κανω πολυ πιο τι ποιος ολος καθε αλλος ιδιος εδω εκει τωρα ηδη ακομα ακομη μονο επισης ετσι λοιπον ομως γιατι ναι οχι δηλαδη μεχρι πριν μετα κατα προς χωρις μεσα πανω κατω τοσο οσο κατι κανεις τιποτα πολυς μπορω'
+  : GR
   ? 'ο η το και δε τε γαρ μεν ου ουκ ουχ μη εν εις ες εκ εξ επι προς κατα δια απο υπο περι παρα μετα συν ξυν ανα αντι υπερ προ αμφι ως οτι ει αν αλλα ουν γε δη η ουδε μηδε ουτε μητε ος οστις αυτος ουτος εκεινος οδε τις εγω συ ημεις υμεις σφεις ειμι πας αλλος οσος τοιουτος επει οτε ινα οπως πριν εως ουτω ουτως νυν ετι ηδη πολυς μεγας εαυτου ου αυ περ τοι μην ποτε που πως εμος σος ημετερος υμετερος αρα αρ κε κεν ως ωσπερ ωστε καιπερ ουδεις μηδεις εαν φημι εως'
   : 'et in non sum qui quis is hic ille ipse iste ad cum ut ne de e ex a ab abs per sed si quod quam tam enim autem nec neque atque ac aut vel que ego tu nos vos sui se suus meus tuus noster vester omnis nihil etiam iam tum tunc nunc sic ita ubi ibi ibi inter post ante sub super pro prae ob propter apud contra quoque at an num nisi dum donec quia quoniam quidem vero tamen ergo igitur itaque nam namque alius idem ullus nullus unus solus totus quisque possum facio do dico habeo'
 ).split(/\s+/).map(plain));
@@ -412,14 +415,14 @@ const SRS = (() => {
   });
   function exportAll() {
     const data = { app: 'lector', lang: L.lang, fecha: new Date().toISOString(), vocab: L.Vocab.all(), srs, known: [...known] };
-    const name = 'vocabulario-' + (GR ? 'griego' : 'latin') + '-' + new Date().toISOString().slice(0, 10) + '.json';
+    const name = 'vocabulario-' + (EL ? 'griego-moderno' : GR ? 'griego' : 'latin') + '-' + new Date().toISOString().slice(0, 10) + '.json';
     if (!download(JSON.stringify(data), name)) toast('No se pudo descargar el archivo.');
     else toast('Copia guardada como ' + name + '. Ábrela con «Importar copia» en otro dispositivo.', 6000);
   }
   function importText(t) {
     let d; try { d = JSON.parse(t); } catch (e) { toast('El archivo no es una copia válida.'); return; }
     if (!d || !Array.isArray(d.vocab)) { toast('El archivo no es una copia válida.'); return; }
-    if (d.lang && d.lang !== L.lang) { toast('Esa copia es del lector ' + (d.lang === 'grc' ? 'griego' : 'latino') + '.'); return; }
+    if (d.lang && d.lang !== L.lang) { toast('Esa copia es del lector ' + (d.lang === 'grc' ? 'griego' : d.lang === 'el' ? 'de griego moderno' : 'latino') + '.'); return; }
     const cur = L.Vocab.all(); const have = new Map(cur.map((x) => [x.key, x])); let added = 0;
     for (const x of d.vocab) { if (!x || !x.key) continue; if (!have.has(x.key)) { cur.push(x); have.set(x.key, x); added++; } else if (x.estado === 'sabida') have.get(x.key).estado = 'sabida'; }
     L.Vocab.replaceAll(cur);
@@ -1058,7 +1061,7 @@ function linesForHit(hit) {
 // botón Biblioteca en la barra
 (() => {
   const tools = document.querySelector('.tools'); const openLbl = tools && tools.querySelector('label.primary');
-  if (!tools) return;
+  if (!tools || EL) return;
   const b = el('button', 'btn'); b.type = 'button'; b.id = 'btnLib'; b.title = 'Biblioteca de textos'; b.setAttribute('aria-label', 'Biblioteca');
   b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h4v16H4zM10 4h4v16h-4zM16 5l3.5-1 2.5 15.5-3.5 1z"/></svg><span class="lbl">Biblioteca</span>';
   b.addEventListener('click', () => { const p = $('#panelLib'); if (!p.hidden) { p.hidden = true; return; } LIB.open(); });
@@ -1078,6 +1081,7 @@ function linesForHit(hit) {
 })();
 // botón «Escandir el verso» en la ficha
 function decorateFoot(foot, form, res) {
+  if (EL) return;
   const hit = L.lastHit; if (!hit || !hit.segs || !hit.segs[0]) return;
   const nd = hit.segs[0].node.parentElement;
   const blk = nd && nd.closest(L.BLOCK);
