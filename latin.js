@@ -338,9 +338,10 @@
       const fl = f.toLowerCase();
       const cntV = count(fl, 'v');
       const Vmaj = f[0] === 'V';
-      let cntAe = count(fl, 'æ');
+      // ligaduras: se comparan con los diptongos de la forma completa (tema + desinencia);
+      // Collatinus solo los buscaba en el tema y por eso fallaban hæc, quædam, æs…
+      const cntAe = count(fl, 'æ');
       const cntOe = count(fl, 'œ');
-      if (fl.endsWith('æ')) cntAe -= 1;
       f = deramise(f);
       for (const irr of this.irregs.get(f) || []) for (const m of irr.morphos) push(irr.lemme, { grq: irr.grq, morpho: m, sufq: '' });
       for (let i = 0; i <= f.length; i++) {
@@ -357,8 +358,9 @@
               const rq = rad.grq.toLowerCase();
               let c = cntV === 0 || cntV === count(rq, 'v') + count(des.grq, 'v');
               if (!c) c = Vmaj && rad.gr[0] === 'U' && cntV - 1 === count(rq, 'v');
-              c = c && (cntOe === 0 || cntOe === count(rq, 'ōe'));
-              c = c && (cntAe === 0 || cntAe === count(rq, 'āe') + count(rq, 'prăe'));
+              const fq0 = (rq + des.grq).toLowerCase();
+              c = c && (cntOe === 0 || cntOe === count(fq0, 'ōe') + count(fq0, 'œ'));
+              c = c && (cntAe === 0 || cntAe === count(fq0, 'āe') + count(fq0, 'prăe') + count(fq0, 'prăĕ') + count(fq0, 'æ'));
               if (c) {
                 let fq = rad.grq + des.grq;
                 if (!r.endsWith('i') && rad.gr.endsWith('i')) fq = rad.grq.slice(0, -1) + 'ī' + des.grq.slice(1);
